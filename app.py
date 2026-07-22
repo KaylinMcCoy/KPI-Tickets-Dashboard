@@ -2,8 +2,8 @@ import pandas as pd
 import streamlit as st
 import plotly.express as px
 
-st.set_page_config(page_title="KPI Dashboard", layout="wide")
-st.title("📊 KPI Dashboard")
+st.set_page_config(page_title="Agent Performance & SLA Targets by Experience Level", layout="wide")
+st.title("Agent Performance & SLA Targets by Experience Level")
 
 #Phase 1: Data Loading & Cleaning
 
@@ -112,28 +112,8 @@ avg_first_response = filtered_df['first_response_minutes'].mean()
 st.write(f"**Average Resolution Time:** {avg_resolution:.2f} hours")
 st.write(f"**Average First Response Time:** {avg_first_response:.2f} minutes")
 
-# By Category
-st.write("**By Category:**")
-by_category = filtered_df.groupby('issue_category')[['resolution_time_hours', 'first_response_minutes']].mean()
-st.dataframe(by_category)
 
-# By Priority
-st.write("**By Priority:**")
-by_priority = filtered_df.groupby('priority')[['resolution_time_hours', 'first_response_minutes']].mean()
-st.dataframe(by_priority)
-
-# METRIC 3: Volume Metrics
-st.subheader("Volume Metrics")
-
-# Ticket count and avg resolution by category
-st.write("**Tickets by Category:**")
-volume_by_category = filtered_df.groupby('issue_category').agg({
-    'ticket_id': 'count',
-    'resolution_time_hours': 'mean'
-}).rename(columns={'ticket_id': 'Count', 'resolution_time_hours': 'Avg Resolution (hours)'})
-st.dataframe(volume_by_category)
-
-# METRIC 4: Agent Performance
+# METRIC : Agent Performance
 st.subheader("Agent Performance")
 
 # By experience level
@@ -144,41 +124,6 @@ agent_performance = filtered_df.groupby('experience_buckets').agg({
 }).rename(columns={'ticket_id': 'Count', 'resolution_time_hours': 'Avg Resolution (hours)'})
 st.dataframe(agent_performance)
 
-# By Category - Resolution Time (BAR CHART)
-by_category_resolution = filtered_df.groupby('issue_category')['resolution_time_hours'].mean().reset_index()
-fig_category_resolution = px.bar(by_category_resolution, x='issue_category', y='resolution_time_hours',
-                                  title='Avg Resolution Time by Category',
-                                  labels={'issue_category': 'Category', 'resolution_time_hours': 'Hours'})
-st.plotly_chart(fig_category_resolution, use_container_width=True)
-
-# Convert "By Category" first response time to a bar chart
-by_category_first_response = filtered_df.groupby('issue_category')['first_response_minutes'].mean().reset_index()
-fig_category_first_response = px.bar(by_category_first_response, x='issue_category', y='first_response_minutes',
-                                      title='Avg First Response Time by Category',
-                                      labels={'issue_category': 'Category', 'first_response_minutes': 'Minutes'})
-st.plotly_chart(fig_category_first_response, use_container_width=True)
-
-# Convert "By Priority" 
-# By Priority - Resolution Time
-by_priority_resolution = filtered_df.groupby('priority')['resolution_time_hours'].mean().reset_index()
-fig_priority_resolution = px.bar(by_priority_resolution, x='priority', y='resolution_time_hours',
-                                  title='Avg Resolution Time by Priority',
-                                  labels={'priority': 'Priority', 'resolution_time_hours': 'Hours'})
-st.plotly_chart(fig_priority_resolution, use_container_width=True)
-
-# By Priority - First Response Time
-by_priority_first_response = filtered_df.groupby('priority')['first_response_minutes'].mean().reset_index()
-fig_priority_first_response = px.bar(by_priority_first_response, x='priority', y='first_response_minutes',
-                                      title='Avg First Response Time by Priority',
-                                      labels={'priority': 'Priority', 'first_response_minutes': 'Minutes'})
-st.plotly_chart(fig_priority_first_response, use_container_width=True)
-
-# Convert "Tickets by Category" to a bar chart
-volume_by_category = filtered_df.groupby('issue_category')['ticket_id'].count().reset_index()
-fig_volume_by_category = px.bar(volume_by_category, x='issue_category', y='ticket_id',
-                                 title='Volume of Tickets by Category',
-                                 labels={'issue_category': 'Category', 'ticket_id': 'Ticket Count'})
-st.plotly_chart(fig_volume_by_category, use_container_width=True)
 
 # Convert "Agent Performance" to a bar chart
 # Agent Performance - Ticket Count
@@ -194,3 +139,12 @@ fig_agent_resolution = px.bar(agent_resolution, x='experience_buckets', y='resol
                                title='Avg Resolution Time by Experience Level',
                                labels={'experience_buckets': 'Experience Level', 'resolution_time_hours': 'Hours'})
 st.plotly_chart(fig_agent_resolution, use_container_width=True)
+
+#export the data
+csv = filtered_df.to_csv(index=False)
+st.download_button(
+    label="Download Filtered Data as CSV",
+    data=csv,
+    file_name="filtered_tickets.csv",
+    mime="text/csv"
+)
